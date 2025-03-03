@@ -17,5 +17,7 @@ extern char hex2ascii(int hex);
 extern char keyHandler(struct usb_keyboard_packet *packet);
 extern void tok64(char **, char *, char *, int *);
 extern void fbclearrow(int);
+extern void fbclearreceive(void);
+extern void print_to_screen(const char*, int*, int);
 
 #endif

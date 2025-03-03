@@ -236,14 +236,14 @@ void print_to_screen(const char *received_str, int *freeRow, int received_chars)
 
     while (chars_remaining > 0) {
         // Check if screen is full, reset if necessary
-        if (*freeRow >= MAX_ROWS) {
-            clear_receive();
+        if (*freeRow >= 22) {
+            fbclearreceive();
             *freeRow = 0;
         }
 
         // Extract a 64-character chunk
-        char buffer[MAX_COLS + 1];  // +1 for null terminator
-        int chunk_size = (chars_remaining > MAX_COLS) ? MAX_COLS : chars_remaining;
+        char buffer[64 + 1];  // +1 for null terminator
+        int chunk_size = (chars_remaining > 64) ? 64 : chars_remaining;
 
         strncpy(buffer, received_str + offset, chunk_size);
         buffer[chunk_size] = '\0';  // Null terminate
@@ -256,6 +256,7 @@ void print_to_screen(const char *received_str, int *freeRow, int received_chars)
         offset += chunk_size;
         chars_remaining -= chunk_size;
     }
+}
 
 /* 8 X 16 console font from /lib/kbd/consolefonts/lat0-16.psfu.gz
 
