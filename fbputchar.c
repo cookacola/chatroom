@@ -203,13 +203,21 @@ char keyHandler(struct usb_keyboard_packet *packet)
     }
 
     /* Handle Special Symbols (Punctuation) */
-    if (keycode0 >= 45 && keycode0 <= 56) {
-	// Mapping for `- = [ ] \ ; ' , . /` and their Shifted versions
-	char normal[] = "-=[]\\;'\n,./";
-	char shifted[] = "_+{}|:\"<>?";
-	int index = keycode0 - 45;
-	return ((modifiers & 0x02) || (modifiers & 0x02)) ? shifted[index] : normal[index];
+    if ((keycode0 >= 45 && keycode0 <= 49) || (keycode0 >= 51 && keycode0 <= 52) || (keycode0 >= 54 && keycode0 <= 56)) {
+    char normal[] = "-=[]\\;'"
+                    ",./";
+    char shifted[] = "_+{}|:\"<>?";
+    int index;
+    if (keycode0 >= 45 && keycode0 <= 49) {
+        index = keycode0 - 45;
+    } else if (keycode0 >= 51 && keycode0 <= 52) {
+        // Skip keycode 50
+        index = (keycode0 - 45) - 1;
+    } else {  // keycode0 is 54, 55, or 56; skip keycodes 50 and 53
+        index = (keycode0 - 45) - 2;
     }
+    return (modifiers & 0x02) ? shifted[index] : normal[index];
+}
 
     /* Handle Function Keys (F1-F12) */
     if (keycode0 >= 58 && keycode0 <= 69) {
