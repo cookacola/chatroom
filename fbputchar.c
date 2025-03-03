@@ -230,15 +230,32 @@ char keyHandler(struct usb_keyboard_packet *packet)
 /*
  * Tokenizes a string into 64 size chunnks
  */
-void print_to_screen(char **matrix, char *n, char *buffer, int *topRow) {
-	int len = strlen(n);
-	for(int i = 0; i < len; i+=64) {
-		strncpy(buffer, n + i, 64);
-		buffer[65] = '\0';
-		matrix[*topRow] = buffer; 
-		(*topRow)++;
-	}
- }
+void print_to_screen(const char *received_str, int *freeRow, int received_chars) {
+    int chars_remaining = received_chars;
+    int offset = 0;
+
+    while (chars_remaining > 0) {
+        // Check if screen is full, reset if necessary
+        if (*freeRow >= MAX_ROWS) {
+            clear_receive();
+            *freeRow = 0;
+        }
+
+        // Extract a 64-character chunk
+        char buffer[MAX_COLS + 1];  // +1 for null terminator
+        int chunk_size = (chars_remaining > MAX_COLS) ? MAX_COLS : chars_remaining;
+
+        strncpy(buffer, received_str + offset, chunk_size);
+        buffer[chunk_size] = '\0';  // Null terminate
+
+        // Print to framebuffer at current free row
+        fbputs(buffer, *freeRow, 0);
+
+        // Move to the next line
+        (*freeRow)++;
+        offset += chunk_size;
+        chars_remaining -= chunk_size;
+    }
 
 /* 8 X 16 console font from /lib/kbd/consolefonts/lat0-16.psfu.gz
 
