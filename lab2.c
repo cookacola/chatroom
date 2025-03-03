@@ -127,15 +127,16 @@ int main()
       sprintf(keystate, "%02x %02x %02x", packet.modifiers, 
 	  	packet.keycode[0],packet.keycode[1]);
 
-	  if(strcmp(keystate, "00 00 00") == 0)
-		continue;
+      if (packet.keycode[0] == 0x29) { /* ESC pressed? */
+		break;
+      }
 
 	  ascii = keyHandler(&packet);
-	  if(ascii == 0)
+	  if(ascii == '\0')
 		continue;
 
 	  /* user clicks enter */
-	  if(packet.keycode[0] == 0x28 && packet) {
+	  if(ascii == '\n') {
 		int n;
 		cursor = 0;
   		if ((n = send(sockfd, entry, strlen(entry), 0)) > 0 ) {
@@ -149,26 +150,46 @@ int main()
 		fbclearrow(22);
 		continue;
 	  }
+	  
+	  if(ascii == 2) {
+		cursor--;
+		continue;
+	  }
 
-	  if(packet.keycode[0] == 0x2A) {
+	  if(ascii == 1) {
+		if(cursor == strlen(entry))
+			continue;
+		else {
+			cursor++;
+			continue;
+		}
+	  }
+
+		/* Backspce */
+	  if(ascii == '\b') {
 		/* Delete pressed */
 		if (cursor == strlen(entry)) {
 			/* End of the line */
 			entry[cursor - 1] = '\0';
-			cursor--;
 		} else if (cursor < strlen(entry) && cursor >= 0) {
+			/* Middle of line */
 			entry[cursor] = ' ';
 		}
-
+		/* Adjust the display */
 	  	if (cursor > COLS && cursor < (2 * COLS)) {
 			/* Cursor is on the second line */
-			fbputchar(ascii, 23, cursor - COLS);
+			fbputchar(' ', 23, cursor - COLS);
 	  	} else if (cursor >= 0 && cursor < COLS) {
 			/* Cursor is on the first line */
-			fbputchar(ascii, 22, cursor);
+			fbputchar(' ', 22, cursor);
 		}
+		if (cursor > 0) {
+			cursor--;
+		}
+		continue;
 	  }
-
+		
+		/* Printable Character */
 	  printf("%c", ascii);
 	  if (cursor > COLS && cursor < (2 * COLS)) {
 		/* Cursor is on the second line */
@@ -194,9 +215,6 @@ int main()
 
       printf("%s\n", keystate);
       //fbputs(keystate, 6, 0);
-      if (packet.keycode[0] == 0x29) { /* ESC pressed? */
-		break;
-      }
     }
   }
 
