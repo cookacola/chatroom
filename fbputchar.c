@@ -208,7 +208,7 @@ char keyHandler(struct usb_keyboard_packet *packet)
 	char normal[] = "-=[]\\;'\n,./";
 	char shifted[] = "_+{}|:\"<>?";
 	int index = keycode0 - 45;
-	return (modifiers & 0x02) ? shifted[index] : normal[index];
+	return ((modifiers & 0x02) || (modifiers & 0x02)) ? shifted[index] : normal[index];
     }
 
     /* Handle Function Keys (F1-F12) */
