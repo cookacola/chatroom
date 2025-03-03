@@ -132,6 +132,13 @@ void fbclearrow(int row)
 	}
 }
 
+void fbclearreceive()
+{
+	for (int row = 0; row < 22; row++) {
+		fbclearrow(row);
+	}
+}
+
 /*
  * Converts the hexadecimal keystate into
  * ASCII characters
@@ -223,7 +230,7 @@ char keyHandler(struct usb_keyboard_packet *packet)
 /*
  * Tokenizes a string into 64 size chunnks
  */
-void tok64(char **matrix, char *n, char *buffer, int *topRow) {
+void print_to_screen(char **matrix, char *n, char *buffer, int *topRow) {
 	int len = strlen(n);
 	for(int i = 0; i < len; i+=64) {
 		strncpy(buffer, n + i, 64);

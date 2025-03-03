@@ -110,6 +110,7 @@ int main()
   int cursor = 0;
   char ascii = ' ';
   char entry[2 * COLS + 1] = "";
+  char coveredChar = '\0';
   for (;;) {
 	/* Highlight the cursor */
 	if (cursor > COLS && cursor < (2 * COLS)) {
@@ -119,6 +120,8 @@ int main()
 		/* Cursor is on the first line */
 		fbputchar('_', 22, cursor);
 	}
+	if(cursor < strlen(entry))
+		coveredChar = entry[cursor];
     libusb_interrupt_transfer(keyboard, endpoint_address,
 			      (unsigned char *) &packet, sizeof(packet),
 			      &transferred, 0);
@@ -139,7 +142,7 @@ int main()
 	  if(ascii == '\n') {
 		int n;
 		cursor = 0;
-  		if ((n = send(sockfd, entry, strlen(entry), 0)) > 0 ) {
+  		if ((n = send(sockfd, entry, strlen(entry), 0)) >= 0 ) {
 			printf("Sent %d bytes\n", n);
 		} else {
 			printf("Send failed");
@@ -152,17 +155,42 @@ int main()
 	  }
 	  
 	  if(ascii == 2) {
-		cursor--;
+		/* Cursor moves left */
+		if(cursor > 0 && cursor != strlen(entry)) {
+			if (cursor > COLS && cursor < (2 * COLS)) {
+				/* Cursor is on the second line */
+				fbputchar(coveredChar, 23, cursor - COLS);
+			} else if (cursor >= 0 && cursor < COLS) {
+				/* Cursor is on the first line */
+				fbputchar(coveredChar, 22, cursor);
+			}
+			cursor--;
+		} else if (cursor == strlen(entry)) {
+			if (cursor > COLS && cursor < (2 * COLS)) {
+				/* Cursor is on the second line */
+				fbputchar(' ', 23, cursor - COLS);
+			} else if (cursor >= 0 && cursor < COLS) {
+				/* Cursor is on the first line */
+				fbputchar(' ', 22, cursor);
+			}
+			cursor--;
+		}
 		continue;
 	  }
 
 	  if(ascii == 1) {
-		if(cursor == strlen(entry))
-			continue;
-		else {
-			cursor++;
-			continue;
+		/* Cursor moves right */
+		if(cursor < strlen(entry)) {
+				if (cursor > COLS && cursor < (2 * COLS)) {
+					/* Cursor is on the second line */
+					fbputchar(coveredChar, 23, cursor - COLS);
+				} else if (cursor >= 0 && cursor < COLS) {
+					/* Cursor is on the first line */
+					fbputchar(coveredChar, 22, cursor);
+				}
+				cursor++;
 		}
+			continue;
 	  }
 
 		/* Backspce */
