@@ -166,25 +166,58 @@ char keyHandler(struct usb_keyboard_packet *packet)
 	int modifiers = packet->modifiers;
 	int keycode0 = (packet->keycode)[0];
 	int keycode1 = (packet->keycode)[1];
-	char result = '0';
+	 /* Return NULL character if no key is pressed */
+    if (keycode0 == 0)
+	return '\0';
 
-	if((modifiers == 0x02 || modifiers == 0x20) && keycode0 > 3 && keycode0 < 30 && keycode1 == 0) {
-		/* capital letters */	
-		result = capitalize(hex2ascii(keycode0));
-	} else if(modifiers == 0x02 && keycode0 > 28 && keycode0 < 40 && keycode1 == 0)
-	{
-		/* Some Punctuation */
-		
-	} else if(modifiers == 0x00 && keycode0 > 28 && keycode0 < 40 && keycode1 == 0)
-	{
-		/* Number is pressed */
-		result = hex2ascii(keycode0);	
-	} else if(modifiers == 0x00 && keycode0 > 3 && keycode0 < 30 && keycode1 == 0) {
-		/* lowercase letters */
-		result = hex2ascii(keycode0);
-	}
+    /* Handle Letter Keys */
+    if ((modifiers == 0x02 || modifiers == 0x20) && keycode0 > 3 && keycode0 < 30 && keycode1 == 0) {
+	return capitalize(hex2ascii(keycode0));  // Capitalized letters
+    } else if (modifiers == 0x00 && keycode0 > 3 && keycode0 < 30 && keycode1 == 0) {
+	return hex2ascii(keycode0);  // Lowercase letters
+    }
 
-	return result;
+    /* Handle Numbers and Punctuation */
+    if (keycode0 >= 30 && keycode0 <= 39) {
+	// Number keys (1-9, 0) and their Shifted symbols (!@#$%^&*())
+	char normal[] = "1234567890";
+	char shifted[] = "!@#$%^&*()";
+	int index = keycode0 - 30;
+	return (modifiers & 0x02) ? shifted[index] : normal[index];
+    }
+
+    /* Handle Space, Enter, Backspace, Tab, Escape */
+    switch (keycode0) {
+	case 44: return ' ';  // Space
+	case 40: return '\n'; // Enter
+	case 42: return '\b'; // Backspace
+	case 43: return '\t'; // Tab
+	case 41: return 27;   // Escape (ASCII code 27)
+    }
+
+    /* Handle Special Symbols (Punctuation) */
+    if (keycode0 >= 45 && keycode0 <= 56) {
+	// Mapping for `- = [ ] \ ; ' , . /` and their Shifted versions
+	char normal[] = "-=[]\\;'\n,./";
+	char shifted[] = "_+{}|:\"<>?";
+	int index = keycode0 - 45;
+	return (modifiers & 0x02) ? shifted[index] : normal[index];
+    }
+
+    /* Handle Function Keys (F1-F12) */
+    if (keycode0 >= 58 && keycode0 <= 69) {
+	return (char)(keycode0 - 58 + 'F');  // Return 'F' for Function keys
+    }
+
+    /* Handle Arrow Keys */
+    switch (keycode0) {
+	case 79: return 1;   // Right Arrow
+	case 80: return 2;   // Left Arrow
+	case 81: return 3;   // Down Arrow
+	case 82: return 4;   // Up Arrow
+    }
+
+    return '\0';  // No valid key detected
 }
 
 /*
