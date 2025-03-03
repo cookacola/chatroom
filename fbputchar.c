@@ -190,7 +190,7 @@ char keyHandler(struct usb_keyboard_packet *packet)
 	char normal[] = "1234567890";
 	char shifted[] = "!@#$%^&*()";
 	int index = keycode0 - 30;
-	return (modifiers & 0x02) ? shifted[index] : normal[index];
+	return ((modifiers & 0x02)||(modifiers & 0x20)) ? shifted[index] : normal[index];
     }
 
     /* Handle Space, Enter, Backspace, Tab, Escape */
