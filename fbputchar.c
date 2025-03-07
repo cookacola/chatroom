@@ -31,6 +31,7 @@ struct fb_var_screeninfo fb_vinfo;
 struct fb_fix_screeninfo fb_finfo;
 unsigned char *framebuffer;
 static unsigned char font[];
+int unshift = 0;
 
 /*
  * Open the framebuffer to prepare it to be written to.  Returns 0 on success
@@ -134,7 +135,7 @@ void fbclearrow(int row)
 
 void fbclearreceive()
 {
-	for (int row = 0; row < 22; row++) {
+	for (int row = 0; row < 21; row++) {
 		fbclearrow(row);
 	}
 }
@@ -173,15 +174,32 @@ char keyHandler(struct usb_keyboard_packet *packet)
 	int modifiers = packet->modifiers;
 	int keycode0 = (packet->keycode)[0];
 	int keycode1 = (packet->keycode)[1];
+	int shiftPressed = 0;
 	 /* Return NULL character if no key is pressed */
     if (keycode0 == 0)
 	return '\0';
 
     /* Handle Letter Keys */
-    if ((modifiers == 0x02 || modifiers == 0x20) && keycode0 > 3 && keycode0 < 30 && keycode1 == 0) {
-	return capitalize(hex2ascii(keycode0));  // Capitalized letters
+	if ((modifiers == 0x02 || modifiers == 0x20) && keycode1 > 3 && keycode1 < 30){
+			unshift = 1;
+			return capitalize(hex2ascii(keycode1));
+	}
+	else if (modifiers == 0x00 && keycode1 > 3 && keycode1 < 30){
+			unshift = 1;
+			return hex2ascii(keycode1);
+	}
+    else if ((modifiers == 0x02 || modifiers == 0x20) && keycode0 > 3 && keycode0 < 30 && keycode1 == 0) {
+		if(unshift){
+				unshift = 0;
+				return '\0';
+		}
+		return capitalize(hex2ascii(keycode0));  // Capitalized letters
     } else if (modifiers == 0x00 && keycode0 > 3 && keycode0 < 30 && keycode1 == 0) {
-	return hex2ascii(keycode0);  // Lowercase letters
+		if(unshift){
+				unshift = 0;
+				return '\0';
+		}
+		return hex2ascii(keycode0);  // Lowercase letters
     }
 
     /* Handle Numbers and Punctuation */
@@ -244,7 +262,7 @@ void print_to_screen(const char *received_str, int *freeRow, int received_chars)
 
     while (chars_remaining > 0) {
         // Check if screen is full, reset if necessary
-        if (*freeRow >= 22) {
+        if (*freeRow >= 21) {
             fbclearreceive();
             *freeRow = 0;
         }

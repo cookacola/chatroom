@@ -1,6 +1,6 @@
 /*
  *
- * CSEE 4840 Lab 2 for 2019
+ * CSEE 4840 Lab 2 for 2024
  *
  * Apurva Reddy (akr2177), Godwill Agbehonou (gea2118), Charles Chen (cc4919) 
  */
@@ -47,10 +47,12 @@ char buffer[1024];
 
 int main()
 {
+  //these initial variables ar eimportant
+  //we update err and col quite often, we use keystate 
+  //we use the struct packet
   int err, col;
 
   struct sockaddr_in serv_addr;
-
   struct usb_keyboard_packet packet;
   int transferred;
   char keystate[12];
@@ -125,7 +127,7 @@ int main()
     libusb_interrupt_transfer(keyboard, endpoint_address,
 			      (unsigned char *) &packet, sizeof(packet),
 			      &transferred, 0);
-	sleep(0.5);
+	sleep(0.1);
     if (transferred == sizeof(packet)) {
       sprintf(keystate, "%02x %02x %02x", packet.modifiers, 
 	  	packet.keycode[0],packet.keycode[1]);
@@ -201,7 +203,28 @@ int main()
 			entry[cursor - 1] = '\0';
 		} else if (cursor < strlen(entry) && cursor >= 0) {
 			/* Middle of line */
-			entry[cursor] = ' ';
+			//entry[cursor] = ' ';
+			int length = strlen(entry);
+			for(int i = cursor; i < (strlen(entry)-1); i++){
+					entry[i] = entry[i+1];
+			}
+			entry[length-1] = '\0';
+			//entry[length] = '\0';
+			for(int col = 0; col < COLS; col++){
+					if(col < strlen(entry)){
+							fbputchar(entry[col],22, col);
+					}
+					else{
+							fbputchar(' ',22,col);
+					}
+					if(-64 > 0){
+							printf("%d\n", strlen(entry)-COLS-col);
+							fbputchar(entry[col+COLS],23,col);
+					}
+					else{
+							fbputchar(' ',23,col);
+					}
+			}
 		}
 		/* Adjust the display */
 	  	if (cursor > COLS && cursor < (2 * COLS)) {
@@ -234,7 +257,12 @@ int main()
 		cursor++;
 	  } else if (cursor < strlen(entry) && cursor >= 0) {
 		/* Cursor is within the string */
+		int maxLength = strlen(entry);
+		for(int i = cursor; i < maxLength-1; i++){
+				entry[i+1] = entry[i]; 
+		}
 		entry[cursor] = ascii;
+		entry[maxLength+1] = '\0';
 		cursor++;
 	  } else {
 		/* Cursor is at the end and may overflow buffer */
