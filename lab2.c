@@ -217,7 +217,7 @@ int main()
 					else{
 							fbputchar(' ',22,col);
 					}
-					if(-64 > 0){
+					if(length-COLS-col > 0){
 							printf("%d\n", strlen(entry)-COLS-col);
 							fbputchar(entry[col+COLS],23,col);
 					}
@@ -258,12 +258,28 @@ int main()
 	  } else if (cursor < strlen(entry) && cursor >= 0) {
 		/* Cursor is within the string */
 		int maxLength = strlen(entry);
-		for(int i = cursor; i < maxLength-1; i++){
-				entry[i+1] = entry[i]; 
+		for(int i = maxLength; i > cursor; i--){
+				entry[i] = entry[i-1]; 
 		}
 		entry[cursor] = ascii;
 		entry[maxLength+1] = '\0';
 		cursor++;
+
+		for(int col = 0; col < COLS; col++){
+				if(col < strlen(entry)){
+						fbputchar(entry[col],22, col);
+				}
+				else{
+						fbputchar(' ',22,col);
+				}
+				if(maxLength-COLS-col > 0){
+						printf("%d\n", strlen(entry)-COLS-col);
+						fbputchar(entry[col+COLS],23,col);
+				}
+				else{
+						fbputchar(' ',23,col);
+				}
+		}
 	  } else {
 		/* Cursor is at the end and may overflow buffer */
 		continue;

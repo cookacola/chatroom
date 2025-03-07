@@ -10,7 +10,7 @@
  *
  * https://web.archive.org/web/20110415224759/http://www.diskohq.com/docu/api-reference/fb_8h-source.html
  */
-
+#include <stdio.h>
 #include "fbputchar.h"
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -32,6 +32,9 @@ struct fb_fix_screeninfo fb_finfo;
 unsigned char *framebuffer;
 static unsigned char font[];
 int unshift = 0;
+int lastKey = -1;
+int shiftOn = 0;
+
 
 /*
  * Open the framebuffer to prepare it to be written to.  Returns 0 on success
@@ -178,24 +181,32 @@ char keyHandler(struct usb_keyboard_packet *packet)
 	 /* Return NULL character if no key is pressed */
     if (keycode0 == 0)
 	return '\0';
+	printf("%d %d %d\n", unshift, lastKey, keycode0);
+	if (unshift == 1 && lastKey == keycode0 && keycode1 == 0){
+			return '\0';
+	}
 
     /* Handle Letter Keys */
-	if ((modifiers == 0x02 || modifiers == 0x20) && keycode1 > 3 && keycode1 < 30){
+	if ((modifiers == 0x02 || modifiers == 0x20) && keycode1 > 3 && keycode1 < 30 && !unshift){
 			unshift = 1;
+			lastKey  = keycode0;
 			return capitalize(hex2ascii(keycode1));
 	}
 	else if (modifiers == 0x00 && keycode1 > 3 && keycode1 < 30){
 			unshift = 1;
+			lastKey = '\0';
 			return hex2ascii(keycode1);
 	}
     else if ((modifiers == 0x02 || modifiers == 0x20) && keycode0 > 3 && keycode0 < 30 && keycode1 == 0) {
 		if(unshift){
 				unshift = 0;
+				lastKey = keycode0;
 				return '\0';
 		}
 		return capitalize(hex2ascii(keycode0));  // Capitalized letters
     } else if (modifiers == 0x00 && keycode0 > 3 && keycode0 < 30 && keycode1 == 0) {
 		if(unshift){
+				lastKey=modifiers;
 				unshift = 0;
 				return '\0';
 		}
